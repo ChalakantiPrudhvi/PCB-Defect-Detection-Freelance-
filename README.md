@@ -1,3 +1,5 @@
+Live Demo :https://pcb-defect-detection-freelance.onrender.com/
+
 # PCB Defect Detection System Using Machine Learning
 
 A machine learning-based web application that predicts whether a Printed Circuit Board (PCB) is **Defective** or **Non-Defective** based on manufacturing and inspection parameters.
