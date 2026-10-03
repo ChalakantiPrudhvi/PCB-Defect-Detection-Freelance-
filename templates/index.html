@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>PCB Defect Detection</title>
+
+<style>
+
+    * {
+        box-sizing: border-box;
+    }
+
+
+    body {
+
+        margin: 0;
+
+        font-family: Arial, sans-serif;
+
+        min-height: 100vh;
+
+        background:
+            linear-gradient(
+                135deg,
+                #0f172a,
+                #172554,
+                #0f172a
+            );
+
+        color: white;
+
+        padding: 40px 20px;
+    }
+
+
+    .container {
+
+        max-width: 900px;
+
+        margin: auto;
+
+        background: rgba(255, 255, 255, 0.08);
+
+        border: 1px solid rgba(255, 255, 255, 0.15);
+
+        border-radius: 20px;
+
+        padding: 35px;
+
+        backdrop-filter: blur(10px);
+    }
+
+
+    .header {
+
+        text-align: center;
+
+        margin-bottom: 35px;
+    }
+
+
+    .header h1 {
+
+        margin: 0 0 10px;
+
+        font-size: 32px;
+    }
+
+
+    .header p {
+
+        color: #cbd5e1;
+
+        margin: 0;
+    }
+
+
+    .form-grid {
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 20px;
+    }
+
+
+    .form-group {
+
+        display: flex;
+
+        flex-direction: column;
+    }
+
+
+    label {
+
+        margin-bottom: 8px;
+
+        color: #e2e8f0;
+
+        font-size: 14px;
+
+        font-weight: bold;
+    }
+
+
+    input,
+    select {
+
+        width: 100%;
+
+        padding: 12px;
+
+        border-radius: 8px;
+
+        border: 1px solid #475569;
+
+        background: #0f172a;
+
+        color: white;
+
+        outline: none;
+
+        font-size: 14px;
+    }
+
+
+    input:focus,
+    select:focus {
+
+        border-color: #60a5fa;
+    }
+
+
+    button {
+
+        width: 100%;
+
+        margin-top: 30px;
+
+        padding: 14px;
+
+        border: none;
+
+        border-radius: 10px;
+
+        background: #2563eb;
+
+        color: white;
+
+        font-size: 16px;
+
+        font-weight: bold;
+
+        cursor: pointer;
+
+        transition: 0.2s;
+    }
+
+
+    button:hover {
+
+        background: #1d4ed8;
+    }
+
+
+    button:disabled {
+
+        opacity: 0.6;
+
+        cursor: not-allowed;
+    }
+
+
+    /* Result Card */
+
+    #result {
+
+        margin-top: 30px;
+
+        padding: 25px;
+
+        border-radius: 12px;
+
+        background: rgba(15, 23, 42, 0.8);
+
+        text-align: center;
+
+        display: none;
+    }
+
+
+    #result h2 {
+
+        margin-top: 0;
+
+        margin-bottom: 20px;
+
+        font-size: 22px;
+    }
+
+
+    #prediction {
+
+        font-size: 30px;
+
+        font-weight: bold;
+
+        margin-bottom: 25px;
+    }
+
+
+    .probability {
+
+        margin: 20px 0;
+
+        color: #cbd5e1;
+
+        text-align: left;
+    }
+
+
+    .probability-label {
+
+        display: flex;
+
+        justify-content: space-between;
+
+        margin-bottom: 8px;
+
+        font-size: 15px;
+    }
+
+
+    .probability-label span {
+
+        font-weight: bold;
+
+        color: white;
+    }
+
+
+    .progress-bar {
+
+        width: 100%;
+
+        height: 12px;
+
+        background: #1e293b;
+
+        border-radius: 10px;
+
+        overflow: hidden;
+    }
+
+    .progress-fill {
+
+height: 100%;
+
+width: 0%;
+
+border-radius: 10px;
+
+background: #3b82f6;
+
+transition: width 0.6s ease;
+}
+#defectiveBar {
+    background: #ef4444;
+}
+
+#nonDefectiveBar {
+    background: #22c55e;
+}
+
+
+    .error {
+
+        color: #f87171;
+    }
+
+
+    /* Mobile Responsive */
+
+    @media (max-width: 700px) {
+
+        body {
+
+            padding: 20px 10px;
+        }
+
+
+        .container {
+
+            padding: 25px 20px;
+        }
+
+
+        .form-grid {
+
+            grid-template-columns: 1fr;
+        }
+
+
+        .header h1 {
+
+            font-size: 26px;
+        }
+
+    }
+
+</style>
+
+
+</head>
+
+<body>
+
+<div class="container">
+
+
+<!-- Header -->
+
+<div class="header">
+
+    <h1>
+        PCB Defect Detection System
+    </h1>
+
+    <p>
+        Machine Learning Based PCB Quality Inspection
+    </p>
+
+</div>
+
+
+<!-- Input Form -->
+
+<div class="form-grid">
+
+
+    <!-- Voltage -->
+
+    <div class="form-group">
+
+        <label>
+            Voltage (V)
+        </label>
+
+        <input
+            type="number"
+            id="Voltage_V"
+            step="any"
+            required>
+
+    </div>
+
+
+    <!-- Current -->
+
+    <div class="form-group">
+
+        <label>
+            Current (A)
+        </label>
+
+        <input
+            type="number"
+            id="Current_A"
+            step="any"
+            required>
+
+    </div>
+
+
+    <!-- Resistance -->
+
+    <div class="form-group">
+
+        <label>
+            Resistance (Ohm)
+        </label>
+
+        <input
+            type="number"
+            id="Resistance_Ohm"
+            step="any"
+            required>
+
+    </div>
+
+
+    <!-- Temperature -->
+
+    <div class="form-group">
+
+        <label>
+            Temperature (°C)
+        </label>
+
+        <input
+            type="number"
+            id="Temperature_C"
+            step="any"
+            required>
+
+    </div>
+
+
+    <!-- Solder Quality -->
+
+    <div class="form-group">
+
+        <label>
+            Solder Quality (1-10)
+        </label>
+
+        <input
+            type="number"
+            id="Solder_Quality"
+            min="1"
+            max="10"
+            required>
+
+    </div>
+
+
+    <!-- Component Alignment -->
+
+    <div class="form-group">
+
+        <label>
+            Component Alignment (1-10)
+        </label>
+
+        <input
+            type="number"
+            id="Component_Alignment"
+            min="1"
+            max="10"
+            required>
+
+    </div>
+
+
+    <!-- Track Quality -->
+
+    <div class="form-group">
+
+        <label>
+            Track Quality (1-10)
+        </label>
+
+        <input
+            type="number"
+            id="Track_Quality"
+            min="1"
+            max="10"
+            required>
+
+    </div>
+
+
+    <!-- Solder Type -->
+
+    <div class="form-group">
+
+        <label>
+            Solder Type
+        </label>
+
+        <select id="Solder_Type">
+
+            <option value="Lead-Free">
+                Lead-Free
+            </option>
+
+            <option value="Lead">
+                Lead
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <!-- Inspection Status -->
+
+    <div class="form-group">
+
+        <label>
+            Inspection Status
+        </label>
+
+        <select id="Inspection_Status">
+
+            <option value="Passed">
+                Passed
+            </option>
+
+            <option value="Failed">
+                Failed
+            </option>
+
+        </select>
+
+    </div>
+
+</div>
+
+
+<!-- Predict Button -->
+
+<button
+    id="predictButton"
+    onclick="predictPCB()">
+
+    Predict PCB Defect
+
+</button>
+
+
+<!-- Result -->
+
+<div id="result">
+
+    <h2>
+        PCB Inspection Result
+    </h2>
+
+
+    <div id="prediction"></div>
+
+
+    <!-- Defective Probability -->
+
+    <div class="probability">
+
+        <div class="probability-label">
+
+            <span>
+                Defective Probability
+            </span>
+
+            <span>
+                <span id="defectiveProbability">
+                    0
+                </span>%
+            </span>
+
+        </div>
+
+
+        <div class="progress-bar">
+
+            <div
+                id="defectiveBar"
+                class="progress-fill">
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Non-Defective Probability -->
+
+    <div class="probability">
+
+        <div class="probability-label">
+
+            <span>
+                Non-Defective Probability
+            </span>
+
+            <span>
+                <span id="nonDefectiveProbability">
+                    0
+                </span>%
+            </span>
+
+        </div>
+
+
+        <div class="progress-bar">
+
+            <div
+                id="nonDefectiveBar"
+                class="progress-fill">
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+
+<script>
+
+
+async function predictPCB() {
+
+
+    /*
+     * Step 1:
+     * Check whether all numerical fields
+     * have been filled.
+     */
+
+    const requiredFields = [
+
+        "Voltage_V",
+
+        "Current_A",
+
+        "Resistance_Ohm",
+
+        "Temperature_C",
+
+        "Solder_Quality",
+
+        "Component_Alignment",
+
+        "Track_Quality"
+
+    ];
+
+
+    for (const field of requiredFields) {
+
+
+        const value =
+            document.getElementById(field).value;
+
+
+        if (value === "") {
+
+            alert(
+                "Please fill all PCB parameters."
+            );
+
+            return;
+        }
+
+    }
+
+
+    /*
+     * Step 2:
+     * Get UI elements.
+     */
+
+    const button =
+        document.getElementById(
+            "predictButton"
+        );
+
+
+    const result =
+        document.getElementById(
+            "result"
+        );
+
+
+    const prediction =
+        document.getElementById(
+            "prediction"
+        );
+
+
+    /*
+     * Step 3:
+     * Disable button while
+     * prediction is running.
+     */
+
+    button.disabled = true;
+
+    button.innerText =
+        "Analyzing PCB...";
+
+
+    /*
+     * Step 4:
+     * Collect PCB input values.
+     */
+
+    const data = {
+
+        Voltage_V:
+            document.getElementById(
+                "Voltage_V"
+            ).value,
+
+        Current_A:
+            document.getElementById(
+                "Current_A"
+            ).value,
+
+        Resistance_Ohm:
+            document.getElementById(
+                "Resistance_Ohm"
+            ).value,
+
+        Temperature_C:
+            document.getElementById(
+                "Temperature_C"
+            ).value,
+
+        Solder_Quality:
+            document.getElementById(
+                "Solder_Quality"
+            ).value,
+
+        Component_Alignment:
+            document.getElementById(
+                "Component_Alignment"
+            ).value,
+
+        Track_Quality:
+            document.getElementById(
+                "Track_Quality"
+            ).value,
+
+        Solder_Type:
+            document.getElementById(
+                "Solder_Type"
+            ).value,
+
+        Inspection_Status:
+            document.getElementById(
+                "Inspection_Status"
+            ).value
+
+    };
+
+
+    try {
+
+
+        /*
+         * Step 5:
+         * Send data to Flask backend.
+         */
+
+        const response =
+            await fetch(
+                "/predict",
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body:
+                        JSON.stringify(data)
+
+                }
+            );
+
+
+        /*
+         * Step 6:
+         * Check response.
+         */
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Prediction request failed"
+            );
+
+        }
+
+
+        /*
+         * Step 7:
+         * Convert response to JSON.
+         */
+
+        const resultData =
+            await response.json();
+
+
+        /*
+         * Step 8:
+         * Display prediction.
+         */
+
+        prediction.innerText =
+            resultData.prediction;
+
+
+        /*
+         * Step 9:
+         * Get probabilities.
+         */
+
+        const defectiveProbability =
+            resultData.defective_probability;
+
+
+        const nonDefectiveProbability =
+            resultData.non_defective_probability;
+
+
+        /*
+         * Step 10:
+         * Display probability numbers.
+         */
+
+        document.getElementById(
+            "defectiveProbability"
+        ).innerText =
+            defectiveProbability;
+
+
+        document.getElementById(
+            "nonDefectiveProbability"
+        ).innerText =
+            nonDefectiveProbability;
+
+
+        /*
+         * Step 11:
+         * Update progress bars.
+         */
+
+        document.getElementById(
+            "defectiveBar"
+        ).style.width =
+            defectiveProbability + "%";
+
+
+        document.getElementById(
+            "nonDefectiveBar"
+        ).style.width =
+            nonDefectiveProbability + "%";
+
+
+        /*
+         * Step 12:
+         * Show result card.
+         */
+
+        result.style.display =
+            "block";
+
+
+    } catch (error) {
+
+
+        /*
+         * Handle errors.
+         */
+
+        result.style.display =
+            "block";
+
+
+        prediction.innerText =
+            "Prediction failed";
+
+
+        prediction.className =
+            "error";
+
+
+        console.error(error);
+
+    } finally {
+
+
+        /*
+         * Enable button again.
+         */
+
+        button.disabled = false;
+
+
+        button.innerText =
+            "Predict PCB Defect";
+
+    }
+
+}
+
+
+</script>
+
+</body>
+
+</html>
